@@ -1,4 +1,4 @@
-# Email/SMS Spam Classifier (Streamlit + ML)
+# Email/SMS Spam Classifier 
 
 An interactive machine learning web app that detects whether a given message is **Spam** or **Not Spam**.  
 Built using **Python**, **Streamlit**, and a **Voting Classifier** trained on SMS/Email data.
