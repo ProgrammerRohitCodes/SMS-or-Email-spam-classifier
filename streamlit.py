@@ -28,8 +28,8 @@ def transform_text(text):
         y.append(ps.stem(i))
     return " ".join(y)
 
-model = joblib.load("spam_model(1).pkl")
-tfidf = joblib.load("vectorizer(1).pkl")
+model = joblib.load("spam_model.pkl")
+tfidf = joblib.load("vectorizer.pkl")
 
 st.title("Email/SMS Spam Classifier")
 input_sms = st.text_area("Enter the message")
