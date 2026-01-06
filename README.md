@@ -1,163 +1,166 @@
-# Email / SMS Spam Classifier
+# SMS / Email Spam Classifier
 
-An end-to-end machine learning application that detects whether a given SMS or email message is Spam or Not Spam.  
-This project focuses on classical NLP techniques, model evaluation, and practical deployment using Streamlit.
+A lightweight spam classifier for SMS or short email messages using classic NLP and scikit-learn. The project trains a TF-IDF vectorizer and an ensemble VotingClassifier (soft voting) composed of tuned Logistic Regression, Multinomial Naive Bayes, and Random Forest classifiers.
 
-The aim is not just high accuracy, but interpretability, robustness, and a clear ML workflow.
-
----
-
-## Overview
-
-Spam detection is a common real-world NLP problem where text data must be cleaned, transformed, and classified reliably.  
-This repository demonstrates the complete pipeline — from preprocessing raw text to serving predictions through a simple web interface.
+This repository contains the model training notebook, saved model and vectorizer, and example code to run predictions.
 
 ---
 
-## Features
+## Table of Contents
 
-- Classifies messages as Spam or Not Spam
-- Text preprocessing including:
-  - Lowercasing
-  - Punctuation removal
-  - Stopword removal
-  - Stemming (Porter Stemmer)
-- TF‑IDF vectorization for feature extraction
-- Ensemble learning using a Soft Voting Classifier
-- Lightweight web interface built with Streamlit
-- Runs locally without external services
-
----
-
-## Model & Approach
-
-### Preprocessing
-Raw text messages are cleaned and normalized before feature extraction to reduce noise and improve generalization.
-
-### Vectorization
-TF‑IDF Vectorizer is used to convert text into numerical features — chosen for interpretability and effectiveness on sparse text data.
-
-### Models Used
-Final predictions are produced with a Soft Voting Classifier combining:
-- Logistic Regression
-- Multinomial Naive Bayes
-- Random Forest
-
-Hyperparameters for individual models were tuned using GridSearchCV.
+- [Getting Started](#getting-started)
+- [Dataset](#dataset)
+- [Approach](#approach)
+- [Modeling & Hyperparameter Tuning](#modeling--hyperparameter-tuning)
+- [Performance](#performance)
+- [Saved Artifacts](#saved-artifacts)
+- [Usage / Prediction Example](#usage--prediction-example)
+- [Notes & Considerations](#notes--considerations)
+- [License](#license)
+- [Credits](#credits)
 
 ---
 
-## Model Performance
+## Getting Started
 
-Evaluation was performed on a held-out test set.
+Requirements:
+- Python 3.8+
+- scikit-learn
+- pandas
+- joblib
 
-- Accuracy: ~98.45%
-
-Classification report (high level):
-
-- Spam (Class 1):
-  - Precision: 1.00
-  - Recall: 0.89
-  - F1-score: 0.94
-- Not Spam (Class 0):
-  - Precision: 0.98
-  - Recall: 1.00
-  - F1-score: 0.99
-
-Confusion matrix summary:
-- Correctly identified most spam messages.
-- A small number of spam messages were misclassified as non-spam — expected in realistic datasets.
-
-These results reflect a practical balance between precision and recall without signs of obvious overfitting given the reported metrics.
-
----
-
-## Project Structure
-
-SMS-or-Email-spam-classifier/
-│
-├── app.py                     # Streamlit application
-├── SMS_Spam_Classifier.ipynb  # Training and evaluation notebook
-├── requirements.txt
-├── README.md
-└── artifacts/
-    ├── spam_model.pkl         # Trained voting classifier
-    └── vectorizer.pkl         # TF‑IDF vectorizer
-
----
-
-## Setup & Usage
-
-1. Clone the repository
-
-```bash
-git clone https://github.com/ProgrammerRohitCodes/SMS-or-Email-spam-classifier.git
-cd SMS-or-Email-spam-classifier
-```
-
-2. Install dependencies
-
+Install common dependencies:
 ```bash
 pip install -r requirements.txt
+# or
+pip install scikit-learn pandas joblib
 ```
 
-3. Download NLTK resources (one-time)
+---
 
-Run a short Python snippet (or from a Python REPL / notebook):
+## Dataset
+
+This project was built with a typical SMS spam dataset (short messages labeled as ham (0) or spam (1)). The training/test split used in the notebook resulted in 1,034 test samples (889 ham, 145 spam).
+
+---
+
+## Approach
+
+- Text preprocessing: tokenization and TF-IDF vectorization.
+- Models trained and tuned via GridSearchCV:
+  - Logistic Regression
+  - Multinomial Naive Bayes
+  - Random Forest
+- Final classifier: VotingClassifier (voting='soft') combining the best estimators from above.
+
+TF-IDF was used to convert raw text to features, and GridSearchCV was used to find the best hyperparameters for each base model before ensembling.
+
+---
+
+## Modeling & Hyperparameter Tuning
+
+- Logistic Regression: tuned C and solver (best found: C=1, solver='liblinear')
+- MultinomialNB: tuned alpha (best found: alpha=0.1)
+- Random Forest: tuned n_estimators, max_depth, and min_samples_split (best combination chosen by GridSearch)
+- Final ensemble: soft voting VotingClassifier built from the best estimators
+
+The vectorizer and trained VotingClassifier were saved using joblib.
+
+---
+
+## Performance
+
+Final evaluation (on the held-out test set):
+
+- Accuracy: 0.9845261121856866 (≈ 0.98)
+
+Classification report:
+- Test set size: 1,034 samples
+- Class mapping: 0 = ham, 1 = spam
+
+Precision / Recall / F1-score / Support
+- Class 0 (ham): precision 0.98, recall 1.00, f1-score 0.99, support 889
+- Class 1 (spam): precision 1.00, recall 0.89, f1-score 0.94, support 145
+
+Averages:
+- accuracy: 0.98 (overall)
+- macro avg: precision 0.99, recall 0.94, f1-score 0.97
+- weighted avg: precision 0.98, recall 0.98, f1-score 0.98
+
+Confusion matrix:
+```
+[[889   0]
+ [ 16 129]]
+```
+Interpreting the confusion matrix:
+- True Negatives (ham correctly classified): 889
+- False Positives (ham -> spam): 0
+- False Negatives (spam -> ham): 16
+- True Positives (spam correctly classified): 129
+
+This indicates high precision (few false positives) and very high overall accuracy. Most errors are false negatives (spam misclassified as ham), which may be important to address depending on the use case.
+
+---
+
+## Saved Artifacts
+
+The notebook saves the trained vectorizer and model using joblib. In the training notebook these were saved to:
+- Vectorizer: `/content/vectorizer.pkl`
+- Trained VotingClassifier: `/content/spam_model.pkl`
+
+(If you run the notebook locally you can change the save paths as required.)
+
+---
+
+## Usage / Prediction Example
+
+Example code to load the saved artifacts and make a prediction:
 
 ```python
-import nltk
-nltk.download('punkt')
-nltk.download('stopwords')
+import joblib
+
+# load artifacts (update paths as needed)
+vectorizer = joblib.load("path/to/vectorizer.pkl")
+model = joblib.load("path/to/spam_model.pkl")
+
+def predict_message(text: str):
+    X = vectorizer.transform([text])
+    pred = model.predict(X)[0]
+    proba = model.predict_proba(X)[0]
+    return {"label": int(pred), "probability": proba.tolist()}
+
+# Example
+message = "Congratulations! You've won a free voucher. Call now!"
+result = predict_message(message)
+print(result)  # e.g. {'label': 1, 'probability': [0.02, 0.98]}
 ```
 
-4. Run the application
-
-```bash
-streamlit run app.py
-```
-
-Open the local URL shown in the terminal to use the app.
+Notes:
+- `label` is 0 for ham and 1 for spam.
+- `probability` is a 2-element list [P(ham), P(spam)].
 
 ---
 
-## Design Decisions
+## Notes & Considerations
 
-- TF‑IDF was chosen over dense embeddings to keep the model interpretable and lightweight.
-- A voting classifier reduces reliance on a single model and smooths out individual model biases.
-- Streamlit was selected for fast prototyping and a simple local UI.
-- Trained model artifacts are separated from source code for clarity and reproducibility.
-
----
-
-## Limitations & Future Improvements
-
-- Currently trained on a static dataset; no automatic handling for concept drift or evolving spam behaviour.
-- UI could be extended with confidence/probability scores, batch predictions, and explainability (e.g., important tokens).
-- Compare and benchmark transformer-based approaches (BERT, DistilBERT) for potential performance gains.
-- Add monitoring to detect when model performance degrades on new incoming data.
+- The dataset was imbalanced (more ham than spam). The model performs very well overall, but most remaining errors are false negatives (spam classified as ham). If minimizing spam misses is critical, consider:
+  - Using class-weighted classifiers
+  - Resampling (SMOTE / upsampling spam)
+  - Threshold adjustment on predicted probabilities
+- This solution is optimized for short messages. For longer emails, more preprocessing may be necessary (HTML stripping, headers, attachments).
+- Always validate model behavior on your target data before deployment.
 
 ---
 
-## Learning Outcome
+## License
 
-This project strengthened understanding of:
-- Practical NLP preprocessing
-- Feature engineering for text data
-- Ensemble models and evaluation metrics
-- Deploying ML models as usable local applications
+This repository is provided under the MIT License. See LICENSE file for details.
 
 ---
 
-## Next steps (suggested)
+## Credits
 
-If you'd like, we can:
-- Add probability/confidence output in the UI
-- Refactor the notebook logic into modular .py files for cleaner code and testing
-- Prepare a short LinkedIn post that explains the project and core results
-- Add model monitoring or a small pipeline for periodic retraining
+- Author / Maintainer: ProgrammerRohitCodes
+- Built with: scikit-learn, pandas, joblib
 
-Bol, next kya lock karein.
-
----
-```
+If you want additions (API example, Dockerfile, or model export instructions), open an issue or submit a PR. Thank you!
